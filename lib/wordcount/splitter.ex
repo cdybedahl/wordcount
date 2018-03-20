@@ -1,38 +1,21 @@
 defmodule Wordcount.Splitter do
-  use GenServer
+    use DynamicSupervisor
 
-  @me __MODULE__
+    @me __MODULE__
 
-  ### API
+    ### API
 
-  def start_link(_) do
-    GenServer.start_link(@me, :no_args, name: @me)
-  end
+    def start_link(_) do
+        DynamicSupervisor.start_link(@me, :no_args, name: @me)
+    end
 
-  def add(data) do
-    GenServer.cast(@me, {:add, data})
-  end
+    def add(data) do
+        DynamicSupervisor.start_child(@me, Wordcount.Splitter.Worker.child_spec(data))
+    end
 
-  defp process() do
-    GenServer.cast(@me, :process)
-  end
+    ### Callbacks
 
-  ### Callbacks
-
-  def init(:no_args) do
-    {:ok, ""}
-  end
-
-  def handle_cast({:add, data}, buffer) do
-    process()
-    {:noreply, buffer <> data <> "\n"}
-  end
-
-  def handle_cast(:process, buffer) do
-    String.split(buffer)
-    |> Enum.each(&Wordcount.Counter.count/1)
-
-    Wordcount.Reader.file_done()
-    {:noreply, ""}
-  end
+    def init(:no_args) do
+        DynamicSupervisor.init(strategy: :one_for_one)
+    end
 end
