@@ -13,7 +13,7 @@ defmodule Wordcount.Splitter do
     GenServer.cast(@me, {:add, data})
   end
 
-  def process() do
+  defp process() do
     GenServer.cast(@me, :process)
   end
 
